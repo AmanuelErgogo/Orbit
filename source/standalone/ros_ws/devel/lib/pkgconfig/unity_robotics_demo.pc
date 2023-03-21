@@ -1,0 +1,8 @@
+prefix=/home/aman/Orbit/source/standalone/ros_ws/devel
+
+Name: unity_robotics_demo
+Description: Description of unity_robotics_demo
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: ros_tcp_endpoint message_runtime

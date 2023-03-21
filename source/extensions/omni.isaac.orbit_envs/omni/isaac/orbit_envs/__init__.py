@@ -85,3 +85,9 @@ gym.register(
     entry_point="omni.isaac.orbit_envs.manipulation.lift:LiftEnv",
     kwargs={"cfg_entry_point": "omni.isaac.orbit_envs.manipulation.lift:LiftEnvCfg"},
 )
+
+gym.register(
+    id="Isaac-Scoop-Xarm-v0",
+    entry_point="omni.isaac.orbit_envs.manipulation.scoop:ScoopEnv",
+    kwargs={"cfg_entry_point": "omni.isaac.orbit_envs.manipulation.scoop:ScoopEnvCfg"},
+)

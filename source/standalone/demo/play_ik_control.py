@@ -20,7 +20,7 @@ from omni.isaac.kit import SimulationApp
 # add argparse arguments
 parser = argparse.ArgumentParser("Welcome to Orbit: Omniverse Robotics Environments!")
 parser.add_argument("--headless", action="store_true", default=False, help="Force display off at all times.")
-parser.add_argument("--robot", type=str, default="franka_panda", help="Name of the robot.")
+parser.add_argument("--robot", type=str, default="xarm7", help="Name of the robot.")
 parser.add_argument("--num_envs", type=int, default=128, help="Number of environments to spawn.")
 args_cli = parser.parse_args()
 
@@ -50,6 +50,9 @@ from omni.isaac.orbit.robots.config.franka import FRANKA_PANDA_ARM_WITH_PANDA_HA
 from omni.isaac.orbit.robots.config.universal_robots import UR10_CFG
 from omni.isaac.orbit.robots.single_arm import SingleArmManipulator
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
+
+from omni.isaac.orbit.robots.config.xarm import XARM_ARM_WITH_XARM_GRIPPER_CFG
+from omni.isaac.orbit.robots.config.xarm_spoon import XARM_ARM_WITH_SPOON_CFG
 
 """
 Main
@@ -88,14 +91,14 @@ def main():
         "/World/Light/GreySphere",
         "SphereLight",
         translation=(4.5, 3.5, 10.0),
-        attributes={"radius": 2.5, "intensity": 600.0, "color": (0.75, 0.75, 0.75)},
+        attributes={"radius": 2.5, "intensity": 1000.0, "color": (0.75, 0.75, 0.75)},
     )
     # Lights-2
     prim_utils.create_prim(
         "/World/Light/WhiteSphere",
         "SphereLight",
         translation=(-4.5, 3.5, 10.0),
-        attributes={"radius": 2.5, "intensity": 600.0, "color": (1.0, 1.0, 1.0)},
+        attributes={"radius": 2.5, "intensity": 1000.0, "color": (1.0, 1.0, 1.0)},
     )
     # -- Table
     table_usd_path = f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"
@@ -106,8 +109,12 @@ def main():
         robot_cfg = FRANKA_PANDA_ARM_WITH_PANDA_HAND_CFG
     elif args_cli.robot == "ur10":
         robot_cfg = UR10_CFG
+    elif args_cli.robot == "xarm7":
+        robot_cfg = XARM_ARM_WITH_XARM_GRIPPER_CFG
+    elif args_cli.robot == "xarm7_spoon":
+        robot_cfg = XARM_ARM_WITH_SPOON_CFG
     else:
-        raise ValueError(f"Robot {args_cli.robot} is not supported. Valid: franka_panda, ur10")
+        raise ValueError(f"Robot {args_cli.robot} is not supported. Valid: franka_panda, ur10, xarm7, xarm_spoon")
     # configure robot settings to use IK controller
     robot_cfg.data_info.enable_jacobian = True
     robot_cfg.rigid_props.disable_gravity = True

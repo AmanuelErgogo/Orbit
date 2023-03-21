@@ -24,6 +24,27 @@ class TableCfg:
     # note: we use instanceable asset since it consumes less memory
     usd_path = f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"
 
+@configclass
+class FruitsBerryCfg(RigidObjectCfg):
+    """Properties for the object to manipulate in the scene."""
+
+    meta_info = RigidObjectCfg.MetaInfoCfg(
+        usd_path="/home/aman/.local/share/ov/pkg/isaac_sim-2022.2.0/arcare/asset/food/berry_instanceable.usd",
+        geom_prim_rel_path="/Collisions",
+        scale=(1.3e-5, 1.3e-5, 1.3e-5),
+    )
+    init_state = RigidObjectCfg.InitialStateCfg(
+        pos=(0.6, 0.0, 0.075), rot=(1.0, 0.0, 0.0, 0.0), lin_vel=(0.0, 0.0, 0.0), ang_vel=(0.0, 0.0, 0.0)
+    )
+    rigid_props = RigidObjectCfg.RigidBodyPropertiesCfg(
+        max_angular_velocity=1000.0,
+        max_linear_velocity=1000.0,
+        max_depenetration_velocity=10.0,
+        disable_gravity=False,
+    )
+    material_props = RigidObjectCfg.PhysicsMaterialPropertiesCfg(
+        static_friction=0.5, dynamic_friction=0.5, restitution=0.0, material_path="/physics_material"
+    )
 
 @configclass
 class ManipulationObjectCfg(RigidObjectCfg):
@@ -202,6 +223,8 @@ class LiftEnvCfg(IsaacEnvCfg):
     robot: SingleArmManipulatorCfg = FRANKA_PANDA_ARM_WITH_PANDA_HAND_CFG
     # -- object
     object: ManipulationObjectCfg = ManipulationObjectCfg()
+    # -- Fruit
+    fruit: FruitsBerryCfg = FruitsBerryCfg()
     # -- table
     table: TableCfg = TableCfg()
     # -- visualization marker

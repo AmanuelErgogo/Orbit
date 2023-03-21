@@ -43,7 +43,9 @@ from omni.isaac.core.utils.viewports import set_camera_view
 import omni.isaac.orbit.utils.kit as kit_utils
 from omni.isaac.orbit.robots.config.ridgeback_franka import RIDGEBACK_FRANKA_PANDA_CFG
 from omni.isaac.orbit.robots.mobile_manipulator import MobileManipulator
+from omni.isaac.orbit.markers import StaticMarker
 
+from omni.isaac.orbit.robots.config.ridgeback_xarm7 import RIDGEBACK_XARM_WITH_GRIPPER_CFG
 """
 Helpers
 """
@@ -58,7 +60,7 @@ def design_scene():
         "/World/Light/GreySphere",
         "SphereLight",
         translation=(4.5, 3.5, 10.0),
-        attributes={"radius": 2.5, "intensity": 600.0, "color": (0.75, 0.75, 0.75)},
+        attributes={"radius": 2.5, "intensity": 600.0, "color": (0.9, 0.9, 0.9)},
     )
     # Lights-2
     prim_utils.create_prim(
@@ -82,9 +84,19 @@ def main():
     # Set main camera
     set_camera_view([1.5, 1.5, 1.5], [0.0, 0.0, 0.0])
     # Spawn things into stage
-    robot = MobileManipulator(cfg=RIDGEBACK_FRANKA_PANDA_CFG)
+    # -- Robot
+    # resolve robot config from command-line arguments
+    if args_cli.robot == "franka_panda":
+        robot_cfg = RIDGEBACK_FRANKA_PANDA_CFG
+    elif args_cli.robot == "xarm7":
+        robot_cfg = RIDGEBACK_XARM_WITH_GRIPPER_CFG
+    else:
+        raise ValueError(f"Robot {args_cli.robot} is not supported. Valid: franka_panda, xarm7")
+    robot = MobileManipulator(cfg=robot_cfg)
     robot.spawn("/World/Robot_1", translation=(0.0, -1.0, 0.0))
     robot.spawn("/World/Robot_2", translation=(0.0, 1.0, 0.0))
+    robot.spawn("/World/Robot_3", translation=(1, 0, 0.0))
+
     design_scene()
     # Play the simulator
     sim.reset()
@@ -93,6 +105,8 @@ def main():
     robot.initialize("/World/Robot.*")
     # Reset states
     robot.reset_buffers()
+
+    ee_marker = StaticMarker("/Visuals/ee_current", count=robot.count, scale=(0.1, 0.1, 0.1))
 
     # Now we are ready!
     print("[INFO]: Setup complete...")
@@ -157,7 +171,7 @@ def main():
             actions[:, 2] = 1.0
         # change the arm action
         if ep_step_count % 100:
-            actions[:, robot.base_num_dof : -1] = torch.rand(robot.count, robot.arm_num_dof, device=robot.device)
+            actions[:, robot.base_num_dof : -1] = torch.rand(robot.count, robot.arm_num_dof, device=robot.device) * 2
         # apply action
         robot.apply_action(actions)
         # perform step
@@ -175,7 +189,7 @@ def main():
                     print("Opened gripper.")
                 else:
                     print("Closed gripper.")
-
+            ee_marker.set_world_poses(robot.data.ee_state_w[:, 0:3], robot.data.ee_state_w[:, 3:7])
 
 if __name__ == "__main__":
     # Run the main function

@@ -34,7 +34,7 @@ class TestEnvironments(unittest.TestCase):
         simulation_app.close()
 
     def setUp(self) -> None:
-        self.use_gpu = False
+        self.use_gpu = True
         self.num_envs = 20
         self.headless = simulation_app.config["headless"]
         # acquire all Isaac environments names

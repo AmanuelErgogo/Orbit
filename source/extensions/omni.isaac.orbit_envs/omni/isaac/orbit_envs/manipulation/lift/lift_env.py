@@ -36,6 +36,7 @@ class LiftEnv(IsaacEnv):
         # create classes (these are called by the function :meth:`_design_scene`)
         self.robot = SingleArmManipulator(cfg=self.cfg.robot)
         self.object = RigidObject(cfg=self.cfg.object)
+        self.berry = RigidObject(cfg=self.cfg.fruit)
 
         # initialize the base class to setup the scene.
         super().__init__(self.cfg, headless=headless)
@@ -65,12 +66,18 @@ class LiftEnv(IsaacEnv):
         # -- fill up buffers
         self.object.update_buffers(self.dt)
         self.robot.update_buffers(self.dt)
+        self.berry.update_buffers(self.dt)
 
     """
     Implementation specifics.
     """
 
     def _design_scene(self) -> List[str]:
+        # clone berry
+        # from omni.isaac.cloner import GridCloner
+        # berry_cloner = GridCloner(spacing=1e-4)
+        # berry_cloner.define_base_env("/World/envs/env_0")
+        # prim_utils.define_prim("/World/envs/env_0/Berry/Collisions")
         # ground plane
         kit_utils.create_ground_plane("/World/defaultGroundPlane", z_position=-1.05)
         # table
@@ -79,7 +86,14 @@ class LiftEnv(IsaacEnv):
         self.robot.spawn(self.template_env_ns + "/Robot")
         # object
         self.object.spawn(self.template_env_ns + "/Object")
+        # berry
+        self.num_berries = 100
+        for b in range(self.num_berries):
+            self.berry.spawn(self.template_env_ns + "/Berry_" + str(b))
 
+        # Clone berry
+        # envs_prim_paths = berry_cloner.generate_paths("/World/envs/env_0/Berry", num_paths=5)
+        # berry_env_positions = berry_cloner.clone(source_prim_path="/World/envs/env_0/Berry", prim_paths=envs_prim_paths, replicate_physics=False)
         # setup debug visualization
         if self.cfg.viewer.debug_vis and self.enable_render:
             # create point instancer to visualize the goal points
@@ -235,6 +249,8 @@ class LiftEnv(IsaacEnv):
         # define views over instances
         self.robot.initialize(self.env_ns + "/.*/Robot")
         self.object.initialize(self.env_ns + "/.*/Object")
+        for b in range(self.num_berries):
+            self.berry.initialize(self.env_ns + "/.*/Berry_" + str(b))
 
         # create controller
         if self.cfg.control.control_type == "inverse_kinematics":

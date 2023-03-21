@@ -45,6 +45,8 @@ from omni.isaac.orbit.robots.config.universal_robots import UR10_CFG
 from omni.isaac.orbit.robots.single_arm import SingleArmManipulator
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
 
+from omni.isaac.orbit.robots.config.xarm import XARM_ARM_WITH_XARM_GRIPPER_CFG
+
 """
 Main
 """
@@ -98,8 +100,10 @@ def main():
         robot_cfg = FRANKA_PANDA_ARM_WITH_PANDA_HAND_CFG
     elif args_cli.robot == "ur10":
         robot_cfg = UR10_CFG
+    elif args_cli.robot == "xarm7":
+        robot_cfg = XARM_ARM_WITH_XARM_GRIPPER_CFG
     else:
-        raise ValueError(f"Robot {args_cli.robot} is not supported. Valid: franka_panda, ur10")
+        raise ValueError(f"Robot {args_cli.robot} is not supported. Valid: franka_panda, ur10, xarm7")
     # spawn robot
     robot = SingleArmManipulator(cfg=robot_cfg)
     robot.spawn("/World/envs/env_0/Robot", translation=(0.0, 0.0, 0.0))
