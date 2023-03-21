@@ -5,10 +5,13 @@
 
 import re
 import torch
-from typing import Dict, Optional
+from typing import Dict, Optional, Sequence
 
+from omni.isaac.core.materials import PhysicsMaterial
 from omni.isaac.core.prims import RigidPrimView
+from pxr import PhysxSchema
 
+import omni.isaac.orbit.utils.kit as kit_utils
 from omni.isaac.orbit.utils.math import combine_frame_transforms, quat_rotate_inverse, subtract_frame_transforms
 
 from ..robot_base import RobotBase
@@ -63,6 +66,31 @@ class SingleArmManipulator(RobotBase):
     """
     Operations.
     """
+
+    def spawn(self, prim_path: str, translation: Sequence[float] = None, orientation: Sequence[float] = None):
+        # spawn the robot and set its location
+        super().spawn(prim_path, translation, orientation)
+        # alter physics collision properties
+        kit_utils.set_nested_collision_properties(prim_path, contact_offset=0.02, rest_offset=0.0)
+        # add physics material to the tool sites bodies!
+        if self.cfg.physics_material is not None and self.cfg.meta_info.tool_sites_names is not None:
+            # -- resolve material path
+            material_path = self.cfg.physics_material.prim_path
+            if not material_path.startswith("/"):
+                material_path = prim_path + "/" + material_path
+            # -- create material
+            material = PhysicsMaterial(
+                prim_path=material_path,
+                static_friction=self.cfg.physics_material.static_friction,
+                dynamic_friction=self.cfg.physics_material.dynamic_friction,
+                restitution=self.cfg.physics_material.restitution,
+            )
+            # -- enable patch-friction: yields better results!
+            physx_material_api = PhysxSchema.PhysxMaterialAPI.Apply(material.prim)
+            physx_material_api.CreateImprovePatchFrictionAttr().Set(True)
+            # -- bind material to feet
+            for site_name in self.cfg.meta_info.tool_sites_names:
+                kit_utils.apply_nested_physics_material(f"{prim_path}/{site_name}", material.prim_path)
 
     def initialize(self, prim_paths_expr: Optional[str] = None):
         # initialize parent handles
@@ -150,10 +178,12 @@ class SingleArmManipulator(RobotBase):
         super()._process_info_cfg()
         # resolve regex expressions for indices
         # -- end-effector body
-        self.ee_body_index = None
+        self.ee_body_index = -1
         for body_index, body_name in enumerate(self.body_names):
             if re.fullmatch(self.cfg.ee_info.body_name, body_name):
                 self.ee_body_index = body_index
+        if self.ee_body_index == -1:
+            raise ValueError(f"Could not find end-effector body with name: {self.cfg.ee_info.body_name}")
         # -- tool sites
         if self.cfg.meta_info.tool_sites_names:
             tool_sites_names = list()
@@ -163,6 +193,10 @@ class SingleArmManipulator(RobotBase):
                     if re.fullmatch(re_key, body_name):
                         tool_sites_names.append(body_name)
                         tool_sites_indices.append(body_index)
+            # check valid indices
+            if len(tool_sites_names) == 0:
+                raise ValueError(f"Could not find any tool sites with names: {self.cfg.meta_info.tool_sites_names}")
+            # create dictionary to map names to indices
             self.tool_sites_indices: Dict[str, int] = dict(zip(tool_sites_names, tool_sites_indices))
         else:
             self.tool_sites_indices = None
@@ -212,7 +246,9 @@ class SingleArmManipulator(RobotBase):
         # jacobian
         if self.cfg.data_info.enable_jacobian:
             jacobians = self.articulations.get_jacobians(indices=self._ALL_INDICES, clone=False)
-            self._data.ee_jacobian[:] = jacobians[:, self.ee_body_index, :, : self.arm_num_dof]
+            # Returned jacobian: [batch, body, 6, dof] does not include the base body (i.e. the first link).
+            # So we need to subtract 1 from the body index to get the correct jacobian.
+            self._data.ee_jacobian[:] = jacobians[:, self.ee_body_index - 1, :, : self.arm_num_dof]
         # mass matrix
         if self.cfg.data_info.enable_mass_matrix:
             mass_matrices = self.articulations.get_mass_matrices(indices=self._ALL_INDICES, clone=False)

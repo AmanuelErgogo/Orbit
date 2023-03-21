@@ -52,20 +52,21 @@ class ManipulationObjectCfg(RigidObjectCfg):
 
     meta_info = RigidObjectCfg.MetaInfoCfg(
         usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
-        geom_prim_rel_path="/collisions",
         scale=(0.8, 0.8, 0.8),
     )
     init_state = RigidObjectCfg.InitialStateCfg(
         pos=(0.4, 0.0, 0.075), rot=(1.0, 0.0, 0.0, 0.0), lin_vel=(0.0, 0.0, 0.0), ang_vel=(0.0, 0.0, 0.0)
     )
     rigid_props = RigidObjectCfg.RigidBodyPropertiesCfg(
+        solver_position_iteration_count=16,
+        solver_velocity_iteration_count=1,
         max_angular_velocity=1000.0,
         max_linear_velocity=1000.0,
-        max_depenetration_velocity=10.0,
+        max_depenetration_velocity=5.0,
         disable_gravity=False,
     )
-    material_props = RigidObjectCfg.PhysicsMaterialPropertiesCfg(
-        static_friction=0.5, dynamic_friction=0.5, restitution=0.0, material_path="/physics_material"
+    physics_material = RigidObjectCfg.PhysicsMaterialCfg(
+        static_friction=0.5, dynamic_friction=0.5, restitution=0.0, prim_path="/World/Materials/cubeMaterial"
     )
 
 
@@ -74,9 +75,9 @@ class GoalMarkerCfg:
     """Properties for visualization marker."""
 
     # usd file to import
-    usd_path = f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd"
+    usd_path = f"{ISAAC_NUCLEUS_DIR}/Props/UIElements/frame_prim.usd"
     # scale of the asset at import
-    scale = [0.8, 0.8, 0.8]  # x,y,z
+    scale = [0.05, 0.05, 0.05]  # x,y,z
 
 
 @configclass
@@ -106,8 +107,8 @@ class RandomizationCfg:
         position_cat: str = "default"  # randomize position: "default", "uniform"
         orientation_cat: str = "default"  # randomize position: "default", "uniform"
         # randomize position
-        position_uniform_min = [0.25, -0.25, 0.25]  # position (x,y,z)
-        position_uniform_max = [0.5, 0.25, 0.5]  # position (x,y,z)
+        position_uniform_min = [0.4, -0.25, 0.075]  # position (x,y,z)
+        position_uniform_max = [0.6, 0.25, 0.075]  # position (x,y,z)
 
     @configclass
     class ObjectDesiredPoseCfg:
@@ -118,8 +119,8 @@ class RandomizationCfg:
         orientation_cat: str = "default"  # randomize position: "default", "uniform"
         # randomize position
         position_default = [0.5, 0.0, 0.5]  # position default (x,y,z)
-        position_uniform_min = [0.25, -0.25, 0.25]  # position (x,y,z)
-        position_uniform_max = [0.5, 0.25, 0.5]  # position (x,y,z)
+        position_uniform_min = [0.4, -0.25, 0.25]  # position (x,y,z)
+        position_uniform_max = [0.6, 0.25, 0.5]  # position (x,y,z)
         # randomize orientation
         orientation_default = [1.0, 0.0, 0.0, 0.0]  # orientation default
 
@@ -139,13 +140,24 @@ class ObservationsCfg:
         # global group settings
         enable_corruption: bool = True
         # observation terms
-        arm_dof_pos_scaled = {"scale": 1.0, "noise": {"name": "uniform", "min": -0.01, "max": 0.01}}
+        # -- joint state
+        arm_dof_pos = {"scale": 1.0}
+        # arm_dof_pos_scaled = {"scale": 1.0}
+        # arm_dof_vel = {"scale": 0.5, "noise": {"name": "uniform", "min": -0.01, "max": 0.01}}
         tool_dof_pos_scaled = {"scale": 1.0}
-        arm_dof_vel = {"scale": 0.5, "noise": {"name": "uniform", "min": -0.1, "max": 0.1}}
-        tool_positions = {}
-        object_positions = {}
-        object_desired_positions = {}
-        actions = {}
+        # -- end effector state
+        tool_positions = {"scale": 1.0}
+        tool_orientations = {"scale": 1.0}
+        # -- object state
+        # object_positions = {"scale": 1.0}
+        # object_orientations = {"scale": 1.0}
+        object_relative_tool_positions = {"scale": 1.0}
+        # object_relative_tool_orientations = {"scale": 1.0}
+        # -- object desired state
+        object_desired_positions = {"scale": 1.0}
+        # -- previous action
+        arm_actions = {"scale": 1.0}
+        tool_actions = {"scale": 1.0}
 
     # global observation settings
     return_dict_obs_in_group = False
@@ -158,15 +170,20 @@ class ObservationsCfg:
 class RewardsCfg:
     """Reward terms for the MDP."""
 
-    # robot-centric
-    reaching_object_position_l2 = {"weight": 0.0}
-    reaching_object_position_exp = {"weight": 2.5, "sigma": 0.25}
-    penalizing_robot_dof_velocity_l2 = {"weight": 1e-4}
-    penalizing_robot_dof_acceleration_l2 = {"weight": 1e-7}
-    penalizing_action_rate_l2 = {"weight": 1e-2}
-    # object-centric
-    tracking_object_position_exp = {"weight": 2.5, "sigma": 0.5}
-    lifting_object_success = {"weight": 0.0, "threshold": 1e-3}
+    # -- robot-centric
+    # reaching_object_position_l2 = {"weight": 0.0}
+    # reaching_object_position_exp = {"weight": 2.5, "sigma": 0.25}
+    reaching_object_position_tanh = {"weight": 2.5, "sigma": 0.1}
+    # penalizing_arm_dof_velocity_l2 = {"weight": 1e-5}
+    # penalizing_tool_dof_velocity_l2 = {"weight": 1e-5}
+    # penalizing_robot_dof_acceleration_l2 = {"weight": 1e-7}
+    # -- action-centric
+    penalizing_arm_action_rate_l2 = {"weight": 1e-2}
+    # penalizing_tool_action_l2 = {"weight": 1e-2}
+    # -- object-centric
+    # tracking_object_position_exp = {"weight": 5.0, "sigma": 0.25, "threshold": 0.08}
+    tracking_object_position_tanh = {"weight": 5.0, "sigma": 0.2, "threshold": 0.08}
+    lifting_object_success = {"weight": 3.5, "threshold": 0.08}
 
 
 @configclass
@@ -206,15 +223,18 @@ class LiftEnvCfg(IsaacEnvCfg):
     """Configuration for the Lift environment."""
 
     # General Settings
-    env: EnvCfg = EnvCfg(num_envs=1024, env_spacing=2.5, episode_length_s=4.0)
+    env: EnvCfg = EnvCfg(num_envs=4096, env_spacing=2.5, episode_length_s=5.0)
     viewer: ViewerCfg = ViewerCfg(debug_vis=True, eye=(7.5, 7.5, 7.5), lookat=(0.0, 0.0, 0.0))
     # Physics settings
     sim: SimCfg = SimCfg(
-        dt=1.0 / 60.0,
+        dt=0.01,
         substeps=1,
         physx=PhysxCfg(
-            gpu_found_lost_aggregate_pairs_capacity=512 * 1024,
-            gpu_total_aggregate_pairs_capacity=6 * 1024,
+            gpu_found_lost_aggregate_pairs_capacity=1024 * 1024 * 4,
+            gpu_total_aggregate_pairs_capacity=16 * 1024,
+            friction_correlation_distance=0.00625,
+            friction_offset_threshold=0.01,
+            bounce_threshold_velocity=0.2,
         ),
     )
 

@@ -1,6 +1,61 @@
 Changelog
 ---------
 
+0.2.6 (2023-03-16)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added the :class:`CollisionPropertiesCfg` to rigid/articulated object and robot base classes.
+* Added the :class:`PhysicsMaterialCfg` to the :class:`SingleArm` class for tool sites.
+
+Changed
+^^^^^^^
+
+* Changed the default control mode of the :obj:`PANDA_HAND_MIMIC_GROUP_CFG` to be from ``"v_abs"`` to ``"p_abs"``.
+  Using velocity control for the mimic group can cause the hand to move in a jerky manner.
+
+
+0.2.5 (2023-03-08)
+~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed the indices used for the Jacobian and dynamics quantities in the :class:`MobileManipulator` class.
+
+
+0.2.4 (2023-03-04)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added :meth:`apply_nested_physics_material` to the ``omni.isaac.orbit.core.utils.kit``.
+* Added the :meth:`sample_cylinder` to sample points from a cylinder's surface.
+* Added documentation about the issue in using instanceable asset as markers.
+
+Fixed
+^^^^^
+
+* Simplified the physics material application in the rigid object and legged robot classes.
+
+Removed
+^^^^^^^
+
+* Removed the ``geom_prim_rel_path`` argument in the :class:`RigidObjectCfg.MetaInfoCfg` class.
+
+
+0.2.3 (2023-02-24)
+~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed the end-effector body index used for getting the Jacobian in the :class:`SingleArm` and :class:`MobileManipulator` classes.
+
+
 0.2.2 (2023-01-27)
 ~~~~~~~~~~~~~~~~~~
 

@@ -352,7 +352,7 @@ def combine_frame_transforms(
     r"""Combine transformations between two reference frames into a stationary frame.
 
     It performs the following transformation operation: :math:`T_{02} = T_{01} \times T_{12}`,
-    where :math:`T_{AB}` is the homogenous transformation matrix from frame A to B.
+    where :math:`T_{AB}` is the homogeneous transformation matrix from frame A to B.
 
     Args:
         t01 (torch.Tensor): Position of frame 1 w.r.t. frame 0.
@@ -385,7 +385,7 @@ def subtract_frame_transforms(
     r"""Subtract transformations between two reference frames into a stationary frame.
 
     It performs the following transformation operation: :math:`T_{12} = T_{01}^{-1} \times T_{02}`,
-    where :math:`T_{AB}` is the homogenous transformation matrix from frame A to B.
+    where :math:`T_{AB}` is the homogeneous transformation matrix from frame A to B.
 
     Args:
         t01 (torch.Tensor): Position of frame 1 w.r.t. frame 0.
@@ -586,3 +586,40 @@ def sample_uniform(
         size = (size,)
     # return tensor
     return torch.rand(*size, device=device) * (upper - lower) + lower
+
+
+def sample_cylinder(
+    radius: float, h_range: Tuple[float, float], size: Union[int, Tuple[int, ...]], device: str
+) -> torch.Tensor:
+    """Sample 3D points uniformly on a cylinder's surface.
+
+    The cylinder is centered at the origin and aligned with the z-axis. The height of the cylinder is
+    sampled uniformly from the range :obj:`h_range`, while the radius is fixed to :obj:`radius`.
+
+    The sampled points are returned as a tensor of shape :obj:`(*size, 3)`, i.e. the last dimension
+    contains the x, y, and z coordinates of the sampled points.
+
+    Args:
+        radius (float): The radius of the cylinder.
+        h_range (Tuple[float, float]): The minimum and maximum height of the cylinder.
+        size (Union[int, Tuple[int, ...]]): The shape of the tensor.
+        device (str): Device to create tensor on.
+
+    Returns:
+        torch.Tensor: Sampled tensor of shape :obj:`(*size, 3)`.
+    """
+    # sample angles
+    angles = (torch.rand(size, device=device) * 2 - 1) * np.pi
+    h_min, h_max = h_range
+    # add shape
+    if isinstance(size, int):
+        size = (size, 3)
+    else:
+        size += (3,)
+    # allocate a tensor
+    xyz = torch.zeros(size, device=device)
+    xyz[..., 0] = radius * torch.cos(angles)
+    xyz[..., 1] = radius * torch.sin(angles)
+    xyz[..., 2].uniform_(h_min, h_max)
+    # return positions
+    return xyz

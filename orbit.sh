@@ -33,8 +33,8 @@ extract_isaacsim_python() {
     local python_exe=${build_path}/python.sh
     # check if there is a python path available
     if [ ! -f "${python_exe}" ]; then
-      echo "[ERROR] No python executable found at path: ${build_path}" >&2
-      exit 1
+        echo "[ERROR] No python executable found at path: ${build_path}" >&2
+        exit 1
     fi
     # return the result
     echo ${python_exe}
@@ -56,8 +56,8 @@ extract_isaacsim_exe() {
     local isaacsim_exe=${build_path}/isaac-sim.sh
     # check if there is a python path available
     if [ ! -f "${isaacsim_exe}" ]; then
-      echo "[ERROR] No isaac-sim executable found at path: ${build_path}" >&2
-      exit 1
+        echo "[ERROR] No isaac-sim executable found at path: ${build_path}" >&2
+        exit 1
     fi
     # return the result
     echo ${isaacsim_exe}
@@ -75,15 +75,26 @@ install_orbit_extension() {
     fi
 }
 
+# update the vscode settings from template and isaac sim settings
+update_vscode_settings() {
+    echo "[INFO] Setting up vscode settings..."
+    # retrieve the python executable
+    python_exe=$(extract_isaacsim_python)
+    # run the setup script
+    ${python_exe} ${ORBIT_PATH}/.vscode/tools/setup_vscode.py
+}
+
 # print the usage description
 print_help () {
-    echo -e "\nusage: $(basename "$0") [-h] [-i] [-e] [-p] [-s] -- Utility to manage extensions in Isaac Orbit."
+    echo -e "\nusage: $(basename "$0") [-h] [-i] [-e] [-f] [-p] [-s] [-v] -- Utility to manage extensions in Isaac Orbit."
     echo -e "\noptional arguments:"
     echo -e "\t-h, --help       Display the help content."
     echo -e "\t-i, --install    Install the extensions inside Isaac Orbit."
     echo -e "\t-e, --extra      Install extra dependencies such as the learning frameworks."
+    echo -e "\t-f, --format     Run pre-commit to format the code and check lints."
     echo -e "\t-p, --python     Run the python executable (python.sh) provided by Isaac Sim."
     echo -e "\t-s, --sim        Run the simulator executable (isaac-sim.sh) provided by Isaac Sim."
+    echo -e "\t-v, --vscode     Generate the VSCode settings file from template."
     echo -e "\n" >&2
 }
 
@@ -103,31 +114,47 @@ fi
 while [[ $# -gt 0 ]]; do
     # read the key
     case "$1" in
-        # install the python packages in omni_isaac_orbit/source directory
         -i|--install)
+            # install the python packages in omni_isaac_orbit/source directory
             echo "[INFO] Installing extensions inside orbit repository..."
             # recursively look into directories and install them
             # this does not check dependencies between extensions
             export -f extract_isaacsim_python
             export -f install_orbit_extension
-            # initialize git hooks
-            pip install pre-commit
             # source directory
             find -L "${ORBIT_PATH}/source/extensions" -mindepth 1 -maxdepth 1 -type d -exec bash -c 'install_orbit_extension "{}"' \;
             # unset local variables
             unset install_orbit_extension
+            # setup vscode settings
+            update_vscode_settings
             shift # past argument
             ;;
-        # install the python packages for supported reinforcement learning frameworks
         -e|--extra)
+            # install the python packages for supported reinforcement learning frameworks
             echo "[INFO] Installing extra requirements such as learning frameworks..."
             python_exe=$(extract_isaacsim_python)
             # install the rl-frameworks specified
-            ${python_exe} -m pip install -e ${ORBIT_PATH}/source/extensions/omni.isaac.orbit_envs[all]
+            ${python_exe} ${ORBIT_PATH}/source/extensions/omni.isaac.orbit_envs[all]
             shift # past argument
             ;;
-        # run the python provided by isaacsim
+        -f|--format)
+            # run the formatter over the repository
+            # check if pre-commit is installed
+            if ! command -v pre-commit &>/dev/null; then
+                echo "[INFO] Installing pre-commit..."
+                pip install pre-commit
+            fi
+            echo "[INFO] Formatting the repository..."
+            # always execute inside the Orbit directory
+            cd "${ORBIT_PATH}"
+            pre-commit run --all-files
+            cd -
+            shift # past argument
+            # exit neatly
+            break
+            ;;
         -p|--python)
+            # run the python provided by isaacsim
             python_exe=$(extract_isaacsim_python)
             echo "[INFO] Using python from: ${python_exe}"
             shift # past argument
@@ -135,8 +162,8 @@ while [[ $# -gt 0 ]]; do
             # exit neatly
             break
             ;;
-        # run the simulator exe provided by isaacsim
         -s|--sim)
+            # run the simulator exe provided by isaacsim
             isaacsim_exe=$(extract_isaacsim_exe)
             echo "[INFO] Running isaac-sim from: ${isaacsim_exe}"
             shift # past argument
@@ -144,10 +171,9 @@ while [[ $# -gt 0 ]]; do
             # exit neatly
             break
             ;;
-        # run the formatter over the repository
-        -f|--format)
-            echo "[INFO] Formatting the repository..."
-            pre-commit run --all-files
+        -v|--vscode)
+            # update the vscode settings
+            update_vscode_settings
             shift # past argument
             # exit neatly
             break

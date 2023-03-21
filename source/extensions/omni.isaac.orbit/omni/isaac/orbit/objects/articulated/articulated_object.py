@@ -132,23 +132,11 @@ class ArticulatedObject:
 
         # TODO: What if prim already exists in the stage and spawn isn't called?
         # apply rigid body properties
-        kit_utils.set_nested_rigid_body_properties(
-            prim_path,
-            linear_damping=self.cfg.rigid_props.linear_damping,
-            angular_damping=self.cfg.rigid_props.angular_damping,
-            max_linear_velocity=self.cfg.rigid_props.max_linear_velocity,
-            max_angular_velocity=self.cfg.rigid_props.max_angular_velocity,
-            max_depenetration_velocity=self.cfg.rigid_props.max_depenetration_velocity,
-            disable_gravity=self.cfg.rigid_props.disable_gravity,
-            retain_accelerations=self.cfg.rigid_props.retain_accelerations,
-        )
+        kit_utils.set_nested_rigid_body_properties(prim_path, **self.cfg.rigid_props.to_dict())
+        # apply collision properties
+        kit_utils.set_nested_collision_properties(prim_path, **self.cfg.collision_props.to_dict())
         # articulation root settings
-        kit_utils.set_articulation_properties(
-            prim_path,
-            enable_self_collisions=self.cfg.articulation_props.enable_self_collisions,
-            solver_position_iteration_count=self.cfg.articulation_props.solver_position_iteration_count,
-            solver_velocity_iteration_count=self.cfg.articulation_props.solver_velocity_iteration_count,
-        )
+        kit_utils.set_articulation_properties(prim_path, **self.cfg.articulation_props.to_dict())
 
     def initialize(self, prim_paths_expr: Optional[str] = None):
         """Initializes the PhysX handles and internal buffers.
@@ -394,16 +382,18 @@ class ArticulatedObject:
         """Post processing of configuration parameters."""
         # default state
         # -- root state
+        # note: we cast to tuple to avoid torch/numpy type mismatch.
         default_root_state = (
-            self.cfg.init_state.pos
-            + self.cfg.init_state.rot
-            + self.cfg.init_state.lin_vel
-            + self.cfg.init_state.ang_vel
+            tuple(self.cfg.init_state.pos)
+            + tuple(self.cfg.init_state.rot)
+            + tuple(self.cfg.init_state.lin_vel)
+            + tuple(self.cfg.init_state.ang_vel)
         )
-        self._default_root_states = torch.tensor(default_root_state, device=self.device).repeat(self.count, 1)
+        self._default_root_states = torch.tensor(default_root_state, dtype=torch.float, device=self.device)
+        self._default_root_states = self._default_root_states.repeat(self.count, 1)
         # -- dof state
-        self._default_dof_pos = torch.zeros(self.count, self.num_dof, device=self.device)
-        self._default_dof_vel = torch.zeros(self.count, self.num_dof, device=self.device)
+        self._default_dof_pos = torch.zeros(self.count, self.num_dof, dtype=torch.float, device=self.device)
+        self._default_dof_vel = torch.zeros(self.count, self.num_dof, dtype=torch.float, device=self.device)
         for index, dof_name in enumerate(self.articulations.dof_names):
             # dof pos
             for re_key, value in self.cfg.init_state.dof_pos.items():
