@@ -4,8 +4,10 @@ import rospy
 from geometry_msgs.msg import Twist, Pose
 from unity_robotics_demo_msgs.msg import PosRot
 from sensor_msgs.msg import Joy
-from tf.transformations import quaternion_from_euler
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import time
+import torch
+import numpy as np
 
 
 prev_pose = None
@@ -106,6 +108,7 @@ class TeleopDeviceSubscriber(object):
             rospy.Subscriber("/vr/right_controller_pose", PosRot, self.oculus_delta_pose_cb)
             rospy.Subscriber("/vr/joy_command", Joy, self.joy_cmd_clb)
             self.delta_pose = [0, 0, 0, 0, 0, 0, 0]
+            self.delta_pose_rel = [0, 0, 0, 0, 0, 0]
             self.follow_cmd = False
         else:
             raise ValueError(f"Device {self.device} is not supported. Valid: oculus, mobile_app")
@@ -118,14 +121,17 @@ class TeleopDeviceSubscriber(object):
     def isaac_cmd_vel_xy_clb(self, msg):
         quat = quaternion_from_euler(msg.angular.x, msg.angular.y, msg.angular.z)
         self.delta_pose = [msg.linear.x, msg.linear.y, msg.linear.z, quat[0], quat[1], quat[2], quat[3]]
+        self.delta_pose_rel = [msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z]
 
     def isaac_cmd_vel_z_rot_z_clb(self, msg):
         quat = quaternion_from_euler(msg.angular.x, msg.angular.y, msg.angular.z)
         self.delta_pose = [msg.linear.x, msg.linear.y, msg.linear.z, quat[0], quat[1], quat[2], quat[3]]
+        self.delta_pose_rel = [msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z]
 
     def isaac_cmd_vel_rot_xy_clb(self, msg):
         quat = quaternion_from_euler(msg.angular.x, msg.angular.y, msg.angular.z)
         self.delta_pose = [msg.linear.x, msg.linear.y, msg.linear.z, quat[0], quat[1], quat[2], quat[3]]
+        self.delta_pose_rel = [msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z]
 
     def oculus_delta_pose_cb(self, msg):
         global planner_hz, cnt, prev_pose, follow_active
@@ -139,7 +145,9 @@ class TeleopDeviceSubscriber(object):
             delta_pose = change_in_pose(pose)
             # rospy.sleep(3)
             # update self.delta_pose
-            self.delta_pose = [delta_pose.position.x, delta_pose.position.y, delta_pose.position.z, delta_pose.orientation.w, delta_pose.orientation.x, delta_pose.orientation.y, delta_pose.orientation.z]
+            self.delta_pose = [-delta_pose.position.y, -delta_pose.position.x, delta_pose.position.z, delta_pose.orientation.w, delta_pose.orientation.x, delta_pose.orientation.y, delta_pose.orientation.z]
+            euler_angles = euler_from_quaternion([delta_pose.orientation.w, delta_pose.orientation.x, delta_pose.orientation.y, delta_pose.orientation.z])
+            self.delta_pose_rel = [-delta_pose.position.y, -delta_pose.position.x, delta_pose.position.z, euler_angles[0], euler_angles[1], euler_angles[2]]
             # print("delta_pose set!")
         cnt = cnt + 1
 
@@ -152,6 +160,8 @@ class TeleopDeviceSubscriber(object):
     def get_delta_pose(self):
         # print("connected to: ", self.device)
         return self.delta_pose
+    def advance(self):
+        return np.array(self.delta_pose_rel), False
 
     def is_follow(self):
         return self.follow_cmd

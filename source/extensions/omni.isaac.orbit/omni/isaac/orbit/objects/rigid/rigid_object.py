@@ -194,6 +194,10 @@ class RigidObject:
     Operations - State.
     """
 
+    """
+    Extended
+    """
+
     def set_root_state(self, root_states: torch.Tensor, env_ids: Optional[Sequence[int]] = None):
         """Sets the root state (pose and velocity) of the actor over selected environment indices.
 

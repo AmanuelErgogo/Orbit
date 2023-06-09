@@ -310,6 +310,7 @@ class IsaacEnv(gym.Env):
                 environments and need to be considered for common collision filtering.
         """
         raise NotImplementedError
+    
 
     @abc.abstractmethod
     def _reset_idx(self, env_ids: VecEnvIndices):

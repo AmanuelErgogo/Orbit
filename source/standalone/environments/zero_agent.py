@@ -20,6 +20,7 @@ parser.add_argument("--num_envs", type=int, default=None, help="Number of enviro
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 args_cli = parser.parse_args()
 
+
 # launch the simulator
 config = {"headless": args_cli.headless}
 simulation_app = SimulationApp(config)
@@ -45,9 +46,11 @@ def main():
     # reset environment
     env.reset()
     # simulate environment
+    actions_ = torch.Tensor([0.0, -0.79, 0.0, 0.8045, 0.0, 1.473, 0.0])
     while simulation_app.is_running():
         # compute zero actions
         actions = torch.zeros((env.num_envs, env.action_space.shape[0]), device=env.device)
+        actions[:,:] = actions_
         # apply actions
         _, _, _, _ = env.step(actions)
         # check if simulator is stopped

@@ -134,7 +134,8 @@ def main():
         # agent stepping
         actions = agent.act(obs, timestep=0, timesteps=0)[0]
         # env stepping
-        obs, _, _, _, _ = env.step(actions)
+        obs, reward, terminated, truncated, info = env.step(actions)
+        print(f'[INFO] Reward: {reward} \nTerminated: {terminated} \nTruncated: {truncated} \nInfo: {info}')
         # check if simulator is stopped
         if env.sim.is_stopped():
             break

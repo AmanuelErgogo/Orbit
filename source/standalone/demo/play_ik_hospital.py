@@ -109,9 +109,9 @@ def main():
         attributes={"radius": 2.5, "intensity": 1000.0, "color": (1.0, 1.0, 1.0)},
     )
     # -- Hospital 
-    hospital_usd_path = "/home/aman/.local/share/ov/pkg/isaac_sim-2022.2.0/arcare/asset/scenes/geo_o_room3.usd"
+    # hospital_usd_path =  "/home/aman/.local/share/ov/pkg/isaac_sim-2022.2.0/arcare/asset/scenes/geo_o_room3.usd"
     # -- Hospital with people
-    # hospital_usd_path = "/home/aman/.local/share/ov/pkg/isaac_sim-2022.2.0/arcare/asset/scenes/geo_o_room3_people_sim.usd"
+    hospital_usd_path = "/home/aman/.local/share/ov/pkg/isaac_sim-2022.2.0/arcare/asset/scenes/geo_o_room3_people_sim.usd"
 
     prim_utils.create_prim("/World/envs/env_0/Hospital_room", usd_path=hospital_usd_path)
 
@@ -149,7 +149,6 @@ def main():
     # spawn robot
     robot = SingleArmManipulator(cfg=robot_cfg)
     robot.spawn("/World/envs/env_0/Robot", translation=(1.69104, -0.77251, 0.931), orientation=(0.707, 0.0, 0.0, 0.707))
-
     # Clone the scene
     num_envs = args_cli.num_envs
     envs_prim_paths = cloner.generate_paths("/World/envs/env", num_paths=num_envs)

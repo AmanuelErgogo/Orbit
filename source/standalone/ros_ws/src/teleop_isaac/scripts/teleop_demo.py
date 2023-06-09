@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser("Welcome to Orbit: Omniverse Robotics Environme
 parser.add_argument("--headless", action="store_true", default=False, help="Force display off at all times.")
 parser.add_argument("--robot", type=str, default="xarm7_spoon", help="Name of the robot.")
 parser.add_argument("--num_envs", type=int, default=1, help="Number of environments to spawn.")
-parser.add_argument("--sensitivity", type=float, default=0.2, help="scaling factor for teleop device")
+parser.add_argument("--sensitivity", type=float, default=0.32, help="scaling factor for teleop device")
 parser.add_argument("--teleop_device", type=str, default="mobile_app", help="Name of the teleop interface device['mobile_app','oculus']")
 args_cli = parser.parse_args()
 
@@ -61,7 +61,8 @@ from teleop_isaac.teleop_device import TeleopDeviceSubscriber
 Main
 """
 import rospy
-sensitivity = 1   # add to cli args
+# sensitivity = torch.tensor([1, 1, 1, 5, 5, 5, 5])
+sensitivity = 1
 
 
 def main():
@@ -172,7 +173,7 @@ def main():
     # init teleop object
     # teleop_device = TeleopDeviceSubscriber(device=args_cli.teleop_device)
     teleop_device = TeleopDeviceSubscriber()
-    print("=================\n - Robot: ", args_cli.robot, "\n - Teleop Device: ", teleop_device.device, "\n - Sensitivity: ", args_cli.sensitivity, "\n===========================")
+    print("=================\n - Robot: ", args_cli.robot, "\n - Teleop Device: ", teleop_device.device, "\n - Sensitivity: ", (sensitivity * args_cli.sensitivity), "\n===========================")
     # Define simulation stepping
     sim_dt = sim.get_physics_dt()
     # episode counter
@@ -211,7 +212,10 @@ def main():
 
         # -- update delta pose if is_follow true
         if teleop_device.is_follow():
+            delta = teleop_device.get_delta_pose()
             delta_pose_desired = [pose * (sensitivity * args_cli.sensitivity) for pose in teleop_device.get_delta_pose()]
+            # delta_pose_desired = [(sensitivity * args_cli.sensitivity) * delta]
+            # print(delta_pose_desired)
             desired_pose = []
             for eef, delta in zip(eef_pose, delta_pose_desired):
                 desired_pose.append(eef + delta)

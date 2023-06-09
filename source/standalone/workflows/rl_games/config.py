@@ -21,6 +21,7 @@ RLG_PPO_CONFIG_FILE = {
     # manipulation
     "Isaac-Lift-Franka-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "rl_games/lift_ppo.yaml"),
     "Isaac-Reach-Franka-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "rl_games/reach_ppo.yaml"),
+    "Isaac-Scoop-Xarm-v0": os.path.join(ORBIT_ENVS_DATA_DIR, "rl_games/scoop_ppo.yaml"),
 }
 """Mapping from environment names to PPO agent files."""
 
