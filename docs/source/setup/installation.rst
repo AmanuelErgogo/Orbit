@@ -17,6 +17,12 @@ Installation Guide
 Installing Isaac Sim
 --------------------
 
+
+.. caution::
+
+   We have observed a few issues with the Isaac Sim 2022.2.1 release. We recommend using the
+   Isaac Sim 2022.2.0 release. For more information, please check the :doc:`/source/refs/issues` page.
+
 Downloading pre-built binaries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -28,7 +34,7 @@ To check the minimum system requirements,refer to the documentation
 `here <https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/requirements.html>`__.
 
 .. note::
-	We have tested ORBIT with Isaac Sim 2022.2 release on Ubuntu
+	We have tested ORBIT with Isaac Sim 2022.2.0 release on Ubuntu
 	20.04LTS with NVIDIA driver 515.76.
 
 Configuring the environment variables
@@ -70,7 +76,7 @@ tutorials on their `website <https://docs.omniverse.nvidia.com/app_isaacsim/app_
 For completeness, we specify the commands here to check that everything is configured correctly.
 On a new terminal (**``Ctrl+Alt+T``**), run the following:
 
--  Check that the simulator is runs:
+-  Check that the simulator runs as expected:
 
    .. code:: bash
 
@@ -86,7 +92,7 @@ On a new terminal (**``Ctrl+Alt+T``**), run the following:
       # checks that Isaac Sim can be launched from python
       ${ISAACSIM_PYTHON_EXE} ${ISAACSIM_PATH}/standalone_examples/api/omni.isaac.core/add_cubes.py
 
-.. note::
+.. attention::
 
 	If you have been using a previous version of Isaac Sim, you
 	need to run the following command for the *first* time after
@@ -109,6 +115,16 @@ Installing Orbit
 Organizing the workspace
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+   We recommend making a `fork <https://github.com/NVIDIA-Omniverse/Orbit/fork>`_ of the ``orbit`` repository to contribute
+   to the project. This is not mandatory to use the framework. If you
+   make a fork, please replace ``NVIDIA-Omniverse`` with your username
+   in the following instructions.
+
+   If you are not familiar with git, we recommend following the `git
+   tutorial <https://git-scm.com/book/en/v2/Getting-Started-Git-Basics>`__.
+
 -  Clone the ``orbit`` repository into your workspace:
 
    .. code:: bash
@@ -130,43 +146,79 @@ Organizing the workspace
       # create a symbolic link
       ln -s ${ISAACSIM_PATH} _isaac_sim
 
-Building extensions
-~~~~~~~~~~~~~~~~~~~
-
-We provide a helper executable ```orbit.sh`` <orbit.sh>`__ that provides
+We provide a helper executable `orbit.sh <https://github.com/NVIDIA-Omniverse/Orbit/blob/main/orbit.sh>`_ that provides
 utilities to manage extensions:
 
-.. code:: bash
+.. code:: text
 
    ./orbit.sh --help
 
-   usage: orbit.sh [-h] [-i] [-e] [-f] [-p] [-s] [-v] -- Utility to manage extensions in Isaac Orbit.
+   usage: orbit.sh [-h] [-i] [-e] [-f] [-p] [-s] [-v] [-d] [-c] -- Utility to manage extensions in Orbit.
 
    optional arguments:
-       -h, --help       Display the help content.
-       -i, --install    Install the extensions inside Isaac Orbit.
-       -e, --extra      Install extra dependencies such as the learning frameworks.
-       -f, --format     Run pre-commit to format the code and check lints.
-       -p, --python     Run the python executable (python.sh) provided by Isaac Sim.
-       -s, --sim        Run the simulator executable (isaac-sim.sh) provided by Isaac Sim.
-       -v, --vscode     Generate the VSCode settings file from template.
+      -h, --help           Display the help content.
+      -i, --install        Install the extensions inside Isaac Orbit.
+      -e, --extra          Install extra dependencies such as the learning frameworks.
+      -f, --format         Run pre-commit to format the code and check lints.
+      -p, --python         Run the python executable (python.sh) provided by Isaac Sim.
+      -s, --sim            Run the simulator executable (isaac-sim.sh) provided by Isaac Sim.
+      -v, --vscode         Generate the VSCode settings file from template.
+      -d, --docs           Build the documentation from source using sphinx.
+      -c, --conda [NAME]   Create the conda environment for Orbit. Default name is 'orbit'.
 
-The executable automatically fetches the python bundled with Isaac
-Sim, using ``./orbit.sh -p`` command. To not restrict running commands
-only from the top of this repository (where the README.md is located),
-we recommend adding the executable to your environment variables in
-your ``.bashrc`` or ``.zshrc`` file as an alias command. This can be
-achieved running the following on your terminal:
-
+To not restrict running commands only from the top of this repository
+(where the README.md is located), we recommend adding the executable to your environment
+variables in your ``.bashrc`` or ``.zshrc`` file as an alias command. This can be achieved
+running the following on your terminal:
 
 .. code:: bash
 
    # note: execute the command from where the `orbit.sh` executable exists
-   # for bash users
+   # option1: for bash users
    echo -e "alias orbit=$(pwd)/orbit.sh" >> ${HOME}/.bashrc
-   # for zshell users
+   # option2: for zshell users
    echo -e "alias orbit=$(pwd)/orbit.sh" >> ${HOME}/.zshrc
 
+Setting up the environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The executable ``orbit.sh`` automatically fetches the python bundled with Isaac
+Sim, using ``./orbit.sh -p`` command (unless inside a virtual environment). This executable
+behaves like a python executable, and can be used to run any python script or
+module with the simulator. For more information, please refer to the
+`documentation <https://docs.omniverse.nvidia.com/app_isaacsim/app_isaacsim/install_python.html>`__.
+
+Although using a virtual environment is optional, we recommend using ``conda``. To install
+``conda``, please follow the instructions `here <https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html>`__.
+In case you want to use ``conda`` to create a virtual environment, you can
+use the following command:
+
+.. code:: bash
+
+   # Option 1: Default name for conda environment is 'orbit'
+   ./orbit.sh --conda  # or `./orbit.sh -c`
+   # Option 2: Custom name for conda environment
+   ./orbit.sh --conda my_env  # or `./orbit.sh -c my_env`
+
+If you are using ``conda`` to create a virtual environment, make sure to
+activate the environment before running any scripts. For example:
+
+.. code:: bash
+
+   conda activate orbit  # or `conda activate my_env`
+
+Once you are in the virtual environment, you do not need to use ``./orbit.sh -p``
+to run python scripts. You can use the default python executable in your environment.
+
+As an example, you can run the following command to check if the virtual environment is
+set up correctly:
+
+.. code:: bash
+
+   python -c "import omni.isaac.orbit; print('Orbit configuration is now complete.')"
+
+Building extensions
+~~~~~~~~~~~~~~~~~~~
 
 To build all the extensions, run the following commands:
 

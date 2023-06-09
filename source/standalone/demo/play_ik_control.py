@@ -147,6 +147,7 @@ def main():
     # Acquire handles
     # Initialize handles
     robot.initialize("/World/envs/env_.*/Robot")
+    ik_controller.initialize()
     # Reset states
     robot.reset_buffers()
     ik_controller.reset_idx()
@@ -221,7 +222,7 @@ def main():
         # apply actions
         robot.apply_action(robot_actions)
         # perform step
-        sim.step()
+        sim.step(render=not args_cli.headless)
         # update sim-time
         sim_time += sim_dt
         count += 1

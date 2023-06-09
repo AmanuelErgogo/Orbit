@@ -192,7 +192,7 @@ class RobotBase:
         # reset history
         self._previous_dof_vel[env_ids] = 0
         # TODO: Reset other cached variables.
-        self.articulations.set_joint_efforts(self._ZERO_JOINT_EFFORT, indices=self._ALL_INDICES)
+        self.articulations.set_joint_efforts(self._ZERO_JOINT_EFFORT[env_ids], indices=self._ALL_INDICES[env_ids])
         # reset actuators
         for group in self.actuator_groups.values():
             group.reset(env_ids)
@@ -446,7 +446,22 @@ class RobotBase:
             # store actuator group
             self.actuator_groups[group_name] = actuator_group
             # store the control mode and dof indices (optimization)
-            self.sim_dof_control_modes[actuator_group.control_mode].extend(actuator_group.dof_indices)
+            if actuator_group.model_type == "implicit":
+                for command in actuator_group.command_types:
+                    # resolve name of control mode
+                    if "p" in command:
+                        command_name = "position"
+                    elif "v" in command:
+                        command_name = "velocity"
+                    elif "t" in command:
+                        command_name = "effort"
+                    else:
+                        continue
+                    # store dof indices
+                    self.sim_dof_control_modes[command_name].extend(actuator_group.dof_indices)
+            else:
+                # in explicit mode, we always use the "effort" control mode
+                self.sim_dof_control_modes["effort"].extend(actuator_group.dof_indices)
 
         # perform some sanity checks to ensure actuators are prepared correctly
         total_act_dof = sum(group.num_actuators for group in self.actuator_groups.values())

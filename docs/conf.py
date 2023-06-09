@@ -43,6 +43,7 @@ extensions = [
     "myst_parser",
     "autodocsumm",
     "sphinx_copybutton",
+    "sphinx_panels",
 ]
 
 # mathjax hacks
@@ -52,6 +53,10 @@ mathjax3_config = {
         "displayMath": [["\\[", "\\]"]],
     },
 }
+
+# panels hacks
+panels_add_bootstrap_css = False
+panels_add_fontawesome_css = True
 
 # supported file extensions for source files
 source_suffix = {
@@ -118,6 +123,7 @@ autodoc_mock_imports = [
     "hid",
     "prettytable",
     "tqdm",
+    "toml",
 ]
 
 # List of zero or more Sphinx-specific warning categories to be squelched (i.e.,

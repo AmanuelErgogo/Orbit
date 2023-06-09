@@ -27,7 +27,7 @@ from .lift_cfg import LiftEnvCfg, RandomizationCfg
 class LiftEnv(IsaacEnv):
     """Environment for lifting an object off a table with a single-arm manipulator."""
 
-    def __init__(self, cfg: LiftEnvCfg = None, headless: bool = False):
+    def __init__(self, cfg: LiftEnvCfg = None, **kwargs):
         # copy configuration
         self.cfg = cfg
         # parse the configuration for controller configuration
@@ -39,7 +39,7 @@ class LiftEnv(IsaacEnv):
         self.berry = RigidObject(cfg=self.cfg.fruit)
 
         # initialize the base class to setup the scene.
-        super().__init__(self.cfg, headless=headless)
+        super().__init__(self.cfg, **kwargs)
         # parse the configuration for information
         self._process_cfg()
         # initialize views for the cloned scenes
@@ -197,7 +197,7 @@ class LiftEnv(IsaacEnv):
         self.extras["time_outs"] = self.episode_length_buf >= self.max_episode_length
         # -- add information to extra if task completed
         object_position_error = torch.norm(self.object.data.root_pos_w - self.object_des_pose_w[:, 0:3], dim=1)
-        self.extras["is_success"] = torch.where(object_position_error < 0.002, 1, self.reset_buf)
+        self.extras["is_success"] = torch.where(object_position_error < 0.02, 1, self.reset_buf)
         # -- update USD visualization
         if self.cfg.viewer.debug_vis and self.enable_render:
             self._debug_vis()
@@ -303,7 +303,7 @@ class LiftEnv(IsaacEnv):
         # -- when task is successful
         if self.cfg.terminations.is_success:
             object_position_error = torch.norm(self.object.data.root_pos_w - self.object_des_pose_w[:, 0:3], dim=1)
-            self.reset_buf = torch.where(object_position_error < 0.002, 1, self.reset_buf)
+            self.reset_buf = torch.where(object_position_error < 0.02, 1, self.reset_buf)
         # -- object fell off the table (table at height: 0.0 m)
         if self.cfg.terminations.object_falling:
             self.reset_buf = torch.where(object_pos[:, 2] < -0.05, 1, self.reset_buf)

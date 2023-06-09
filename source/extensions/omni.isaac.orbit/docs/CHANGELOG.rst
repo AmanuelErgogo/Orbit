@@ -1,6 +1,65 @@
 Changelog
 ---------
 
+0.3.2 (2023-04-27)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added safe-printing of functions while using the :meth:`omni.isaac.orbit.utils.dict.print_dict` function.
+
+
+0.3.1 (2023-04-23)
+~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added a modified version of ``lula_franka_gen.urdf`` which includes an end-effector frame.
+* Added a standalone script ``play_rmpflow.py`` to show RMPFlow controller.
+
+Fixed
+^^^^^
+
+* Fixed the splitting of commands in the :meth:`ActuatorGroup.compute` method. Earlier it was reshaping the
+  commands to the shape ``(num_actuators, num_commands)`` which was causing the commands to be split incorrectly.
+* Fixed the processing of actuator command in the :meth:`RobotBase._process_actuators_cfg` to deal with multiple
+  command types when using "implicit" actuator group.
+
+0.3.0 (2023-04-20)
+~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Added the destructor to the keyboard devices to unsubscribe from carb.
+
+Added
+^^^^^
+
+* Added the :class:`Se2Gamepad` and :class:`Se3Gamepad` for gamepad teleoperation support.
+
+
+0.2.8 (2023-04-10)
+~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed bugs in :meth:`axis_angle_from_quat` in the ``omni.isaac.orbit.core.utils.math`` to handle quaternion with negative w component.
+* Fixed bugs in :meth:`subtract_frame_transforms` in the ``omni.isaac.orbit.core.utils.math`` by adding the missing final rotation.
+
+
+0.2.7 (2023-04-07)
+~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed repetition in applying mimic multiplier for "p_abs" in the :class:`GripperActuatorGroup` class.
+* Fixed bugs in :meth:`reset_buffers` in the :class:`RobotBase` and :class:`LeggedRobot` classes.
+
 0.2.6 (2023-03-16)
 ~~~~~~~~~~~~~~~~~~
 
